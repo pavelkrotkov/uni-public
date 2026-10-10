@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admission Probability Model — Naviance Data</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root { --blue: #1a3a5c; --blue-mid: #2d6aa0; --blue-light: #e8f2fb;
+          --gray: #6b7280; --border: #d1d5db; --bg: #f8fafc; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+         background: var(--bg); color: #1e293b; font-size: 14px; }
+  .header { background: var(--blue); color: white; padding: 12px 24px; }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header .sub { font-size: 12px; opacity: 0.78; }
+  .controls {
+    background: white; border-bottom: 1px solid var(--border);
+    padding: 12px 24px; display: flex; align-items: center; gap: 12px;
+    flex-wrap: wrap; position: sticky; top: 0; z-index: 100;
+  }
+  .controls label { font-weight: 600; color: var(--blue); white-space: nowrap; }
+  .controls select {
+    padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 14px; background: white;
+  }
+  #college-sel { max-width: 380px; flex: 1; }
+  .badge { background: var(--blue-light); color: var(--blue-mid);
+           padding: 3px 10px; border-radius: 12px; font-size: 12px; white-space: nowrap; }
+  .main { max-width: 1300px; margin: 0 auto; padding: 20px 24px; }
+  .stats { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat-card { background: white; border: 1px solid var(--border); border-radius: 8px;
+               padding: 10px 16px; min-width: 140px; }
+  .stat-card .label { font-size: 11px; color: var(--gray); text-transform: uppercase;
+                      letter-spacing: 0.05em; }
+  .stat-card .value { font-size: 20px; font-weight: 700; color: var(--blue); }
+  #heatmap { border: 1px solid var(--border); border-radius: 10px; background: white; }
+  #empty { text-align: center; color: var(--gray); padding: 80px 20px; font-size: 18px; }
+  .legend-note { font-size: 12px; color: var(--gray); margin-top: 8px; }
+  .model-info { background: white; border: 1px solid var(--border); border-radius: 10px;
+                padding: 16px; margin-top: 20px; font-size: 13px; }
+  .model-info h3 { font-size: 14px; color: var(--blue); margin-bottom: 8px; }
+  .model-info code { background: #f1f5f9; padding: 1px 4px; border-radius: 3px; font-size: 12px; }
+  .toggle-row { display: flex; align-items: center; gap: 8px; }
+  .lookup-panel { background: white; border: 1px solid var(--border); border-radius: 10px;
+                  padding: 16px; margin-bottom: 16px; }
+  .lookup-panel h3 { font-size: 14px; color: var(--blue); margin-bottom: 10px; }
+  .lookup-help { font-size: 12px; color: var(--gray); margin-bottom: 12px; max-width: 760px; line-height: 1.45; }
+  .lookup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .lookup-grid label { font-size: 12px; color: var(--gray); display: block; }
+  .lookup-grid input {
+    width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 14px; margin-top: 2px;
+  }
+  .prob-result { font-size: 28px; font-weight: 700; line-height: 1; }
+  .prob-label { font-size: 12px; color: var(--gray); }
+  .lookup-note { font-size: 12px; color: var(--gray); margin-top: 10px; line-height: 1.45; }
+</style>
+</head>
+<body>
+<header class="header">
+  <h1>Admission Probability Model</h1>
+  <div class="sub">Selected model: __MODEL_NAME__ · __N_POINTS__ applicants · __N_COLLEGES__ colleges · 5-fold CV AUC __AUC__</div>
+</header>
+
+<div class="controls">
+  <label for="college-sel">College</label>
+  <select id="college-sel"><option value="">- select -</option></select>
+  <label for="surface-round">Decision round</label>
+  <select id="surface-round">
+    <option value="rd">Regular Decision</option>
+    <option value="ea">Early Action</option>
+    <option value="ed">Early Decision</option>
+  </select>
+  <span id="info-badge" class="badge" style="display:none"></span>
+  <span id="mode-badge" class="badge" style="display:none"></span>
+</div>
+
+<div class="main">
+  <div id="empty">Select a college to see predicted admission probabilities.</div>
+
+  <div id="content" style="display:none">
+    <div class="lookup-panel">
+      <h3>Quick Lookup</h3>
+      <div class="lookup-help">
+        Select a college panel, choose a decision round, then enter a score and GPA to interpolate from the modeled heatmap surface.
+        This is a pooled model estimate based on locally supplied Naviance history, not an official admission chance.
+      </div>
+      <div class="lookup-grid">
+        <div><label id="lu-score-label">SAT / ACT score</label><input type="number" id="lu-score" placeholder="1500"></div>
+        <div><label>GPA</label><input type="number" id="lu-gpa" step="0.01" placeholder="4.20"></div>
+        <div style="display:flex;flex-direction:column;justify-content:end">
+          <div class="prob-result" id="lu-prob">-</div>
+          <div class="prob-label">Modeled admit probability</div>
+        </div>
+      </div>
+      <div class="lookup-note" id="lu-note">
+        Select a college to load a score range and default lookup values.
+      </div>
+    </div>
+
+    <div class="stats" id="stats"></div>
+    <div id="heatmap"></div>
+    <div class="legend-note" id="legend-note">
+      Heatmap: modeled admit probability surface for <span id="surface-mode-label">Regular Decision</span>.
+      Dots: actual applicants from locally supplied Naviance history
+      (<span style="color:#16a34a">&#9679; accepted</span>,
+       <span style="color:#dc2626">&#10005; denied</span>,
+       <span style="color:#d97706">&#9650; waitlisted</span>).
+      Hollow markers = Early Action / Early Decision.
+    </div>
+
+    <div class="model-info">
+      <h3>Model Details</h3>
+      <p><b>Deployed spec:</b> <code>__MODEL_NAME__</code> — __MODEL_DESC__</p>
+      <p style="margin-top:6px">Features: <code>__FEATURES__</code></p>
+      <p style="margin-top:6px">__ROUND_NOTE__</p>
+      <p style="margin-top:6px">Target: Accepted or Waitlisted/Accepted = 1; Denied or other Waitlisted = 0.
+        Trained on __N_POINTS__ data points from locally supplied Naviance data.</p>
+      <p style="margin-top:6px"><b>5-fold CV metrics:</b> AUC = __AUC__, Brier = __BRIER__, LogLoss = __LOGLOSS__</p>
+      <p style="margin-top:6px">__DEPLOYMENT_NOTE__</p>
+      <p style="margin-top:6px">
+        Applicant-point hover text shows held-out cross-validated model estimates. The heatmap and quick lookup show
+        estimates from the final fitted pooled model surface for the selected college panel.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = __DATA__;
+const byKey = {};
+DATA.forEach(c => { byKey[c.college_id + '|' + c.score_type] = c; });
+
+function surfaceModeLabel(round) {
+  return {
+    rd: 'Regular Decision',
+    ea: 'Early Action',
+    ed: 'Early Decision',
+  }[round];
+}
+
+const sel = document.getElementById('college-sel');
+const sorted = [...DATA].sort((a, b) => a.name.localeCompare(b.name));
+sorted.forEach(c => {
+  const opt = document.createElement('option');
+  opt.value = c.college_id + '|' + c.score_type;
+  opt.textContent = c.name + ' (' + c.score_type + ', ' + c.n_points + ' pts)';
+  sel.appendChild(opt);
+});
+
+sel.onchange = () => render(sel.value);
+document.getElementById('surface-round').onchange = () => { if (sel.value) render(sel.value); };
+['lu-score', 'lu-gpa'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateLookup);
+  document.getElementById(id).addEventListener('change', updateLookup);
+});
+
+let currentCollege = null;
+let currentCollegeKey = null;
+
+function median(values) {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+function clamp(value, minValue, maxValue) {
+  return Math.max(minValue, Math.min(maxValue, value));
+}
+
+function render(key) {
+  if (!key) {
+    document.getElementById('empty').style.display = '';
+    document.getElementById('content').style.display = 'none';
+    return;
+  }
+  document.getElementById('empty').style.display = 'none';
+  document.getElementById('content').style.display = '';
+
+  const c = byKey[key];
+  const round = document.getElementById('surface-round').value;
+  const isNewPanel = currentCollegeKey !== key;
+  currentCollege = c;
+  currentCollegeKey = key;
+
+  const probs = c['probs_' + round];
+  const surfaceMode = surfaceModeLabel(round);
+
+  const badge = document.getElementById('info-badge');
+  badge.textContent = c.accept_rate + '% acceptance rate · ' + c.n_points + ' applicants';
+  badge.style.display = '';
+  const modeBadge = document.getElementById('mode-badge');
+  modeBadge.textContent = 'Surface: ' + surfaceMode;
+  modeBadge.style.display = '';
+  document.getElementById('surface-mode-label').textContent = surfaceMode;
+  document.getElementById('lu-score-label').textContent = c.score_type + ' score';
+
+  const pts = c.points;
+  const nAcc = pts.filter(p => p.admitted).length;
+  const avgScore = (pts.reduce((sum, p) => sum + p.score, 0) / pts.length).toFixed(0);
+  const avgGpa = (pts.reduce((sum, p) => sum + p.gpa, 0) / pts.length).toFixed(2);
+
+  document.getElementById('stats').innerHTML = [
+    ['Applicants', pts.length],
+    ['Accepted', nAcc + ' (' + (nAcc / pts.length * 100).toFixed(0) + '%)'],
+    ['Avg ' + c.score_type, avgScore],
+    ['Avg GPA', avgGpa],
+  ].map(([label, value]) => `<div class="stat-card"><div class="label">${label}</div><div class="value">${value}</div></div>`).join('');
+
+  const heatTrace = {
+    type: 'heatmap',
+    x: c.gpas,
+    y: c.scores,
+    z: probs,
+    colorscale: [
+      [0, '#dc2626'], [0.15, '#f97316'], [0.3, '#fbbf24'],
+      [0.5, '#fde68a'], [0.65, '#bbf7d0'], [0.8, '#4ade80'], [1, '#16a34a']
+    ],
+    zmin: 0, zmax: 1,
+    colorbar: { title: 'Modeled admit probability', titleside: 'right', thickness: 14, len: 0.9 },
+    hovertemplate: c.score_type + ': %{y}<br>GPA: %{x}<br>Modeled admit probability: %{z:.1%}<extra></extra>',
+  };
+
+  const accepted = pts.filter(p => p.admitted && !p.early);
+  const denied = pts.filter(p => !p.admitted && p.outcome === 'Denied' && !p.early);
+  const waitlisted = pts.filter(p => !p.admitted && p.outcome !== 'Denied' && !p.early);
+  const accEarly = pts.filter(p => p.admitted && p.early);
+  const denEarly = pts.filter(p => !p.admitted && p.outcome === 'Denied' && p.early);
+  const wlEarly = pts.filter(p => !p.admitted && p.outcome !== 'Denied' && p.early);
+
+  function scatterTrace(arr, name, color, symbol, openMarker) {
+    return {
+      type: 'scatter',
+      mode: 'markers',
+      name,
+      x: arr.map(p => p.gpa),
+      y: arr.map(p => p.score),
+      text: arr.map(p => `<b>${p.outcome}</b><br>${p.decision}<br>${c.score_type}: ${p.score}<br>GPA: ${p.gpa}<br>Held-out model estimate: ${(p.p * 100).toFixed(0)}%`),
+      hovertemplate: '%{text}<extra></extra>',
+      marker: openMarker
+        ? { color, symbol: symbol + '-open', size: 10, line: { color, width: 2 } }
+        : { color, symbol, size: 8, line: { color: 'rgba(255,255,255,0.7)', width: 1 } },
+    };
+  }
+
+  const traces = [heatTrace];
+  if (denied.length) traces.push(scatterTrace(denied, 'Denied · RD', '#dc2626', 'cross', false));
+  if (waitlisted.length) traces.push(scatterTrace(waitlisted, 'Waitlisted · RD', '#d97706', 'triangle-up', false));
+  if (accepted.length) traces.push(scatterTrace(accepted, 'Accepted · RD', '#16a34a', 'circle', false));
+  if (denEarly.length) traces.push(scatterTrace(denEarly, 'Denied · Early', '#dc2626', 'cross', true));
+  if (wlEarly.length) traces.push(scatterTrace(wlEarly, 'Waitlisted · Early', '#d97706', 'triangle-up', true));
+  if (accEarly.length) traces.push(scatterTrace(accEarly, 'Accepted · Early', '#16a34a', 'circle', true));
+
+  const layout = {
+    xaxis: { title: 'GPA', gridcolor: '#f1f5f9', zeroline: false },
+    yaxis: { title: c.score_type + ' Score', gridcolor: '#f1f5f9', zeroline: false },
+    legend: { orientation: 'h', y: -0.15, font: { size: 11 } },
+    margin: { l: 60, r: 20, t: 10, b: 80 },
+    plot_bgcolor: 'white',
+    paper_bgcolor: 'white',
+    height: 520,
+    hovermode: 'closest',
+  };
+
+  Plotly.purge('heatmap');
+  Plotly.newPlot('heatmap', traces, layout, { responsive: true, displayModeBar: false });
+
+  const scoreInput = document.getElementById('lu-score');
+  const gpaInput = document.getElementById('lu-gpa');
+  scoreInput.placeholder = c.score_type === 'SAT' ? '1500' : '34';
+  if (isNewPanel && pts.length) {
+    const scoreStep = c.score_type === 'SAT' ? 10 : 1;
+    scoreInput.value = String(Math.round(median(pts.map(p => p.score)) / scoreStep) * scoreStep);
+    gpaInput.value = median(pts.map(p => p.gpa)).toFixed(2);
+  }
+  updateLookup();
+}
+
+function updateLookup() {
+  const el = document.getElementById('lu-prob');
+  const note = document.getElementById('lu-note');
+  if (!currentCollege) {
+    el.textContent = '—';
+    return;
+  }
+
+  const c = currentCollege;
+  const round = document.getElementById('surface-round').value;
+  const scoreVal = parseFloat(document.getElementById('lu-score').value);
+  const gpaVal = parseFloat(document.getElementById('lu-gpa').value);
+  const scoreMin = c.scores[0];
+  const scoreMax = c.scores[c.scores.length - 1];
+  const gpaMin = c.gpas[0];
+  const gpaMax = c.gpas[c.gpas.length - 1];
+
+  if (isNaN(scoreVal) || isNaN(gpaVal)) {
+    el.textContent = '—';
+    el.style.color = '#6b7280';
+    note.textContent = 'Enter both ' + c.score_type + ' score and GPA. Modeled surface range: ' +
+      scoreMin + '-' + scoreMax + ' ' + c.score_type + ', GPA ' + gpaMin.toFixed(2) + '-' + gpaMax.toFixed(2) + '.';
+    return;
+  }
+
+  const probs = c['probs_' + round];
+  const clampedScore = clamp(scoreVal, scoreMin, scoreMax);
+  const clampedGpa = clamp(gpaVal, gpaMin, gpaMax);
+  const wasClamped = clampedScore !== scoreVal || clampedGpa !== gpaVal;
+
+  let si = c.scores.findIndex(score => score >= clampedScore);
+  if (si < 0) si = c.scores.length - 1;
+  if (si === 0) si = 1;
+  let gi = c.gpas.findIndex(gpa => gpa >= clampedGpa);
+  if (gi < 0) gi = c.gpas.length - 1;
+  if (gi === 0) gi = 1;
+
+  const s0 = si - 1, s1 = si, g0 = gi - 1, g1 = gi;
+  const sf = (clampedScore - c.scores[s0]) / (c.scores[s1] - c.scores[s0] || 1);
+  const gf = (clampedGpa - c.gpas[g0]) / (c.gpas[g1] - c.gpas[g0] || 1);
+  const sfC = Math.max(0, Math.min(1, sf));
+  const gfC = Math.max(0, Math.min(1, gf));
+
+  const p00 = probs[s0][g0], p01 = probs[s0][g1];
+  const p10 = probs[s1][g0], p11 = probs[s1][g1];
+  const p = p00 * (1 - sfC) * (1 - gfC) + p01 * (1 - sfC) * gfC + p10 * sfC * (1 - gfC) + p11 * sfC * gfC;
+
+  el.textContent = (p * 100).toFixed(0) + '%';
+  el.style.color = p > 0.5 ? '#16a34a' : p > 0.25 ? '#d97706' : '#dc2626';
+  note.textContent = wasClamped
+    ? 'Input was outside the modeled surface and was clamped to ' + clampedScore + ' ' + c.score_type +
+      ' and GPA ' + clampedGpa.toFixed(2) + '.'
+    : 'Interpolated from the ' + surfaceModeLabel(round) + ' surface. Modeled range: ' +
+      scoreMin + '-' + scoreMax + ' ' + c.score_type + ', GPA ' + gpaMin.toFixed(2) + '-' + gpaMax.toFixed(2) + '.';
+}
+</script>
+</body>
+</html>

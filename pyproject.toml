@@ -1,0 +1,69 @@
+[project]
+name = "univ"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "matplotlib>=3.7",
+    "seaborn>=0.12",
+    "scipy>=1.10",
+    "scikit-learn>=1.3",
+    "pyarrow>=12.0",
+    "PyYAML>=6.0",
+    "jupyter>=1.0",
+    "ipykernel>=6.0",
+    "nbformat>=5.9",
+    "nbconvert>=7.0",
+    "openpyxl>=3.1.5",
+    "rapidfuzz>=3.0",
+]
+
+[dependency-groups]
+dev = [
+    "pip-audit>=2.10.0",
+    "pre-commit>=4.6.0",
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.13",
+    "ty>=0.0.38",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [
+    "exploration.ipynb",
+    "findings",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["scripts", "findings"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=scripts",
+    "--cov-report=term-missing",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["scripts"]
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.ty.environment]
+extra-paths = ["scripts", "findings"]
+
+[tool.ty.src]
+# repo-wide checking; exclude dirs that are ad-hoc analysis, not production code
+exclude = [
+    "exploration.ipynb",
+    "findings",
+]

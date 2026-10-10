@@ -1,0 +1,145 @@
+{
+  "manual_aliases": {
+    "Binghamton University": [
+      "State University of New York at Binghamton",
+      "SUNY Binghamton",
+      "SUNY at Binghamton"
+    ],
+    "Boston University": [
+      "Boston University Charles River Campus",
+      "Trustees of Boston University"
+    ],
+    "Carnegie Mellon University": [
+      "Carnegie-Mellon University"
+    ],
+    "College of the Holy Cross": [
+      "Holy Cross College"
+    ],
+    "Columbia University in the City of New York": [
+      "Columbia University",
+      "Trustees of Columbia University"
+    ],
+    "Georgia Institute of Technology-Main Campus": [
+      "Georgia Institute of Technology",
+      "Georgia Tech"
+    ],
+    "Indiana University-Bloomington": [
+      "Indiana University Bloomington",
+      "Trustees of Indiana University"
+    ],
+    "Massachusetts Institute of Technology": [
+      "MIT"
+    ],
+    "Miami University-Oxford": [
+      "Miami University"
+    ],
+    "Pennsylvania State University-Main Campus": [
+      "Pennsylvania State University",
+      "Penn State University",
+      "Penn State"
+    ],
+    "Rutgers University-New Brunswick": [
+      "Rutgers University",
+      "Rutgers, The State University of New Jersey",
+      "Rutgers"
+    ],
+    "Stony Brook University": [
+      "State University of New York at Stony Brook",
+      "SUNY Stony Brook",
+      "SUNY at Stony Brook"
+    ],
+    "Texas A&M University-College Station": [
+      "Texas A&M University",
+      "Texas A and M University",
+      "Texas A&M"
+    ],
+    "The College of New Jersey": [
+      "College of New Jersey, The"
+    ],
+    "The University of Alabama": [
+      "University of Alabama"
+    ],
+    "The University of Texas at Austin": [
+      "University of Texas at Austin"
+    ],
+    "Tufts University": [
+      "Tufts University Medford"
+    ],
+    "University at Buffalo": [
+      "State University of New York at Buffalo",
+      "SUNY Buffalo",
+      "SUNY at Buffalo"
+    ],
+    "University of California-Berkeley": [
+      "University of California Berkeley",
+      "Regents of the University of California Berkeley"
+    ],
+    "University of California-Davis": [
+      "University of California Davis",
+      "University of California at Davis"
+    ],
+    "University of California-Los Angeles": [
+      "University of California Los Angeles",
+      "Regents of the University of California Los Angeles"
+    ],
+    "University of California-San Diego": [
+      "University of California San Diego",
+      "Regents of the University of California San Diego"
+    ],
+    "University of California-Santa Barbara": [
+      "University of California Santa Barbara",
+      "University of California at Santa Barbara"
+    ],
+    "University of California-Santa Cruz": [
+      "University of California Santa Cruz",
+      "UC Santa Cruz",
+      "Regents of the University of California Santa Cruz"
+    ],
+    "University of Colorado Boulder": [
+      "CU Boulder",
+      "University of Colorado at Boulder",
+      "University of Colorado",
+      "Regents of the University of Colorado",
+      "Board of Regents of the University of Colorado"
+    ],
+    "University of Connecticut": [
+      "University of Connecticut Storrs"
+    ],
+    "University of Kansas": [
+      "Kansas University",
+      "Kansas, University of"
+    ],
+    "University of Michigan-Ann Arbor": [
+      "University of Michigan at Ann Arbor"
+    ],
+    "University of Minnesota-Twin Cities": [
+      "University of Minnesota"
+    ],
+    "University of North Carolina at Chapel Hill": [
+      "UNC Chapel Hill",
+      "University of North Carolina",
+      "Univ of North Carolina Chapel Hill"
+    ],
+    "University of Virginia-Main Campus": [
+      "University of Virginia"
+    ],
+    "University of Washington-Seattle Campus": [
+      "University of Washington"
+    ],
+    "Washington University in St Louis": [
+      "Washington University in St. Louis",
+      "Washington University",
+      "WUSTL"
+    ],
+    "William & Mary": [
+      "College of William & Mary",
+      "College of William and Mary",
+      "The College of William and Mary"
+    ]
+  },
+  "manual_uei": {
+    "Boston University": "THL6A6JLE1S7",
+    "Columbia University in the City of New York": "QHF5ZZ114M72",
+    "Washington University in St Louis": "L6NFUM28LQM5"
+  }
+}

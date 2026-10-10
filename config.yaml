@@ -1,0 +1,181 @@
+project:
+  slug: undergrad-field-rankings
+  country: US
+  degree_level: bachelors
+  output_dir: outputs/current
+
+years:
+  candidate_universe_asof: 2024
+  completions_start: 2015
+  completions_end: 2024
+  research_start: 2020
+  research_end: 2024
+  grants_start: 2020
+  grants_end: 2024
+
+institution_filters:
+  include_public: true
+  include_private_nonprofit: true
+  include_private_forprofit: false
+  include_special_focus: false
+  include_branch_campuses: false
+  min_total_undergrad_enrollment: 200
+  min_recent_bachelors_in_target_family: 5
+  allowed_country_codes: ["US"]
+
+identity:
+  canonical_internal_key: university_id
+  preferred_external_research_id: ROR
+  require_manual_review_for_ambiguous_matches: true
+  identifier_priority:
+    - IPEDS
+    - SCORECARD_UNITID
+    - SCORECARD_OPEID6
+    - ROR
+    - OPENALEX
+
+sources:
+  ipeds:
+    enabled: true
+    mode: bulk
+    years: [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+  college_scorecard:
+    enabled: true
+    mode: bulk_plus_api_spotcheck
+    use_field_of_study: true
+    credential_levels: [bachelors]
+  openalex:
+    enabled: true
+    mode: bigquery_primary
+    bigquery:
+      project: subugoe-collaborative
+      dataset: openalex
+      gcp_project: your-gcp-project
+      max_bytes_billed: 120000000000
+      export_format: parquet
+      export_compression: snappy
+    counting_methods:
+      - primary_subfield
+      - topic_deduped_subfield
+  ror:
+    enabled: true
+    mode: api_or_registry
+  usaspending:
+    enabled: true
+    mode: api
+  nih_reporter:
+    enabled: true
+    mode: api_plus_bulk_if_needed
+  nsf_awards:
+    enabled: true
+    mode: api
+  common_data_set:
+    enabled: false
+    mode: manual_optional
+
+field_clusters:
+  - slug: molbio
+    label: Molecular Biology
+    cip_rules:
+      include_6digit: ["26.0202", "26.0203", "26.0204"]
+      include_2digit_families: ["26"]
+      exclude_6digit: []
+    oa_rules:
+      primary_subfields: []
+      secondary_subfields: []
+      adjacent_subfields: [1103, 1110, 1310, 1508, 2805, 3002, 3205, 3206, 3314]
+    fit_weights:
+      primary: 1.0
+      secondary: 0.6
+      adjacent: 0.25
+    scoring_profile: balanced
+
+  - slug: genetics
+    label: Genetics
+    cip_rules:
+      include_6digit: ["26.0801"]
+      include_2digit_families: ["26"]
+      exclude_6digit: []
+    oa_rules:
+      primary_subfields: []
+      secondary_subfields: []
+      adjacent_subfields: []
+    fit_weights:
+      primary: 1.0
+      secondary: 0.6
+      adjacent: 0.25
+    scoring_profile: balanced
+
+  - slug: statistics
+    label: Statistics
+    cip_rules:
+      include_6digit: ["27.0501", "27.0502", "27.0503", "27.0599", "27.0601"]
+      include_2digit_families: ["27"]
+      exclude_6digit: []
+    oa_rules:
+      primary_subfields: []
+      secondary_subfields: []
+      adjacent_subfields: []
+    fit_weights:
+      primary: 1.0
+      secondary: 0.6
+      adjacent: 0.25
+    scoring_profile: balanced
+
+  - slug: bioanthro
+    label: Biological Anthropology
+    cip_rules:
+      include_6digit: ["45.0202", "45.0203"]
+      include_2digit_families: []
+      exclude_6digit: []
+    oa_rules:
+      primary_subfields: [3314]
+      secondary_subfields: [1105, 1311, 2713]
+      adjacent_subfields: [2802, 3302, 3306]
+    fit_weights:
+      primary: 1.0
+      secondary: 0.6
+      adjacent: 0.25
+    scoring_profile: balanced
+
+scoring_profiles:
+  balanced:
+    weights:
+      program_availability: 0.2
+      research_opportunity: 0.25
+      student_outcomes: 0.25
+      value: 0.15
+      selectivity_access: 0.1
+      enrichment: 0.05
+  research_heavy:
+    weights:
+      program_availability: 0.15
+      research_opportunity: 0.4
+      student_outcomes: 0.2
+      value: 0.1
+      selectivity_access: 0.1
+      enrichment: 0.05
+  value_heavy:
+    weights:
+      program_availability: 0.2
+      research_opportunity: 0.15
+      student_outcomes: 0.25
+      value: 0.3
+      selectivity_access: 0.05
+      enrichment: 0.05
+
+feature_flags:
+  allow_institution_level_outcome_fallback: true
+  penalize_missing_field_outcomes: true
+  compute_grant_subfield_stats_only_when_defensible: true
+  produce_manual_review_queue: true
+  write_run_manifest: true
+  write_component_scores: true
+
+outputs:
+  write_rankings_csv: true
+  write_rankings_parquet: true
+  write_feature_store_parquet: true
+  write_unresolved_matches_csv: true
+  write_unmapped_cips_csv: true
+  write_coverage_report_md: true
